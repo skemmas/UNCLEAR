@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNCLEAR | Reality Distortion Protocol</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030303;
+            --text: #ffffff;
+            --accent-blue: #00f2ff;
+            --accent-purple: #7000ff;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+            --glitch-speed: 0.2s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: crosshair;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'JetBrains+Mono', monospace;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(112, 0, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 242, 255, 0.05) 0%, transparent 40%);
+        }
+
+        /* --- UI Elements --- */
+
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        .noise {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://raw.githubusercontent.com/pixel-perfection/assets/main/noise.png');
+            opacity: 0.03;
+            z-index: 99;
+            pointer-events: none;
+        }
+
+        header {
+            padding: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 1.5rem;
+            letter-spacing: 0.5rem;
+            text-transform: uppercase;
+            animation: flicker 3s infinite;
+        }
+
+        /* --- Hero Section --- */
+
+        .hero {
+            padding: 6rem 2rem 2rem;
+            text-align: center;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            line-height: 1;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, #fff, #7000ff, #00f2ff, #fff);
+            background-size: 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: flow 10s linear infinite;
+        }
+
+        .hero p {
+            opacity: 0.6;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+        }
+
+        /* --- CONTRACT ADDRESS SECTION --- */
+        .ca-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            position: relative;
+            box-shadow: 0 0 30px rgba(112, 0, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .ca-container:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .ca-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            opacity: 0.5;
+            letter-spacing: 3px;
+        }
+
+        .ca-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.4);
+            padding: 0.8rem 1rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
+
+        .ca-value {
+            font-family: 'JetBrains+Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--accent-blue);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: 1px solid var(--accent-blue);
+            color: var(--accent-blue);
+            padding: 0.4rem 1rem;
+            font-family: 'JetBrains+Mono', monospace;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
+        }
+
+        .copy-btn:hover {
+            background: var(--accent-blue);
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+        }
+
+        /* --- Dashboard --- */
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .main-console {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .input-area {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            color: #fff;
+            font-family: 'JetBrains+Mono', monospace;
+            min-height: 150px;
+            margin-bottom: 1.5rem;
+            outline: none;
+            resize: none;
+            transition: border 0.3s;
+        }
+
+        .input-area:focus {
+            border-color: var(--accent-purple);
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 1rem;
+            background: transparent;
+            color: #fff;
+            border: 1px solid #fff;
+            font-family: 'JetBrains+Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: 0.3s;
+        }
+
+        .action-btn:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        /* --- Metrics & Stats --- */
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            opacity: 0.5;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .stat-bar {
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-fill {
+            height: 100%;
+            background: var(--accent-blue);
+            width: 50%;
+            transition: width 1s ease-in-out;
+        }
+
+        .stat-value {
+            font-size: 0.8rem;
+            margin-top: 0.4rem;
+            display: block;
+            text-align: right;
+        }
+
+        /* --- Live Feed --- */
+        .live-feed {
+            height: 200px;
+            overflow-y: hidden;
+            font-size: 0.7rem;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            background: rgba(0,0,0,0.2);
+            color: #00ff00;
+            opacity: 0.8;
+        }
+
+        .feed-item {
+            margin-bottom: 0.5rem;
+            border-left: 2px solid var(--accent-purple);
+            padding-left: 0.5rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        /* --- Tokenomics & Roadmap --- */
+        .grid-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 4rem auto;
+            padding: 0 2rem;
+        }
+
+        .info-box {
+            border: 1px solid var(--border);
+            padding: 2rem;
+            background: var(--glass);
+            transition: 0.3s;
+        }
+
+        .info-box h3 {
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--accent-purple);
+            text-transform: uppercase;
+        }
+
+        .token-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.8rem;
+            font-size: 0.8rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 0.4rem;
+        }
+
+        /* --- Animations --- */
+
+        @keyframes flicker {
+            0% { opacity: 0.8; }
+            5% { opacity: 0.4; }
+            10% { opacity: 0.9; }
+            15% { opacity: 0.3; }
+            25% { opacity: 1; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes flow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-10px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .dashboard { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 3rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanline"></div>
+    <div class="noise"></div>
+
+    <header>
+        <div class="logo">UNCLEAR</div>
+        <div style="display: flex; gap: 1rem;">
+            <a href="#" style="color: #fff; text-decoration: none; font-size: 0.7rem;">TWITTER</a>
+            <a href="#" style="color: #fff; text-decoration: none; font-size: 0.7rem;">TELEGRAM</a>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>REALITY DISTORTION PROTOCOL</h1>
+        <p>SYSTEM ATTEMPTING TO INTERPRET CORRUPTED INTERNET SIGNALS. MEANING IS OBSOLETE.</p>
+
+        <!-- CONTRACT ADDRESS SECTION -->
+        <div class="ca-container">
+            <span class="ca-label">Verified Signal Address</span>
+            <div class="ca-box">
+                <!-- MANUALLY REPLACE THE CA HERE -->
+                <div class="ca-value" id="caValue">7xKdV...unclear...SolanaCA111111111111111111</div>
+                <button class="copy-btn" onclick="copyCA()">COPY CA</button>
+            </div>
+        </div>
+    </section>
+
+    <div class="dashboard">
+        <div class="main-console">
+            <div class="loading-overlay" id="loader">
+                <div id="loaderText">RECONSTRUCTING SIGNAL...</div>
+            </div>
+            <textarea class="input-area" id="userInput" placeholder="ENTER RANDOM THOUGHTS, TWEETS, OR MEME DATA FOR CLARIFICATION..."></textarea>
+            <button class="action-btn" onclick="attemptClarification()">[ ATTEMPT CLARIFICATION ]</button>
+            
+            <div id="outputContainer" style="margin-top: 2rem; display: none;">
+                <h2 style="font-size: 0.8rem; margin-bottom: 1rem; color: var(--accent-blue);">INTERPRETATION RESULT:</h2>
+                <div id="resultText" style="font-size: 1.2rem; color: #fff; margin-bottom: 2rem; border-left: 2px solid #fff; padding-left: 1rem;"></div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="stat-card">
+                        <span class="stat-label">Reality Stability</span>
+                        <div class="stat-bar"><div class="stat-fill" id="bar1"></div></div>
+                        <span class="stat-value" id="val1">--%</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Cognitive Distortion</span>
+                        <div class="stat-bar"><div class="stat-fill" id="bar2" style="background: var(--accent-purple);"></div></div>
+                        <span class="stat-value" id="val2">--%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="side-panel">
+            <div class="stat-card">
+                <span class="stat-label">SYSTEM DIAGNOSTICS</span>
+                <div class="stat-row" style="font-size: 0.7rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Information Decay:</span>
+                        <span style="color: red;">ACCELERATING</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Context Integrity:</span>
+                        <span style="color: var(--accent-blue);">UNSTABLE</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="live-feed" id="liveFeed">
+                <!-- JS Populated -->
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-label">UTILITY METRICS</span>
+                <div style="margin-bottom: 1rem;">
+                    <span class="stat-label" style="font-size: 0.5rem;">Signal Confidence</span>
+                    <div class="stat-bar"><div class="stat-fill" style="width: 21%;"></div></div>
+                </div>
+                <div>
+                    <span class="stat-label" style="font-size: 0.5rem;">Meaning Reconstruction</span>
+                    <div class="stat-bar"><div class="stat-fill" style="width: 44%; background: var(--accent-purple);"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid-info">
+        <div class="info-box">
+            <h3>Tokenomics</h3>
+            <div class="token-row"><span>Unstable Reserves</span><span>35%</span></div>
+            <div class="token-row"><span>Signal Reconstruction</span><span>25%</span></div>
+            <div class="token-row"><span>Interpretation Systems</span><span>15%</span></div>
+            <div class="token-row"><span>Reality Maintenance</span><span>10%</span></div>
+            <div class="token-row"><span>Context Stabilization</span><span>10%</span></div>
+            <div class="token-row"><span>Unresolved Allocation</span><span>5%</span></div>
+        </div>
+
+        <div class="info-box">
+            <h3>Roadmap</h3>
+            <div class="token-row" style="color: #fff; border: none;"><span>Phase 1</span><span>Launch Clarification Protocol</span></div>
+            <div class="token-row" style="color: rgba(255,255,255,0.4); border: none;"><span>Phase 2</span><span>Reconstruct Internet Signals</span></div>
+            <div class="token-row" style="color: rgba(255,255,255,0.4); border: none;"><span>Phase 3</span><span>Global Interpretation Collapse</span></div>
+            <div class="token-row" style="color: rgba(255,255,255,0.4); border: none;"><span>Phase 4</span><span>Reality Coherence Failure</span></div>
+        </div>
+
+        <div class="info-box">
+            <h3>Classification</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <span style="padding: 2px 8px; border: 1px solid var(--accent-blue); font-size: 0.6rem;">UNCLEAR</span>
+                <span style="padding: 2px 8px; border: 1px solid var(--border); font-size: 0.6rem;">FRAGMENTED</span>
+                <span style="padding: 2px 8px; border: 1px solid var(--accent-purple); font-size: 0.6rem;">REDACTED</span>
+                <span style="padding: 2px 8px; border: 1px solid var(--border); font-size: 0.6rem;">CORRUPTED</span>
+                <span style="padding: 2px 8px; border: 1px solid var(--accent-blue); font-size: 0.6rem;">UNSTABLE</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const messages = [
+            "Interpretation partially corrupted.",
+            "Meaning reconstruction failed.",
+            "Context instability detected.",
+            "Signal clarity below acceptable threshold.",
+            "Entity exists outside normal interpretation range.",
+            "Multiple conflicting realities detected.",
+            "Information decay accelerating.",
+            "Unable to determine original intent.",
+            "Logic loops detected in local space.",
+            "Signal lost in liminal digital space."
+        ];
+
+        const feedUpdates = [
+            "clarification attempt failed",
+            "signal fragmentation increasing",
+            "context corruption spreading",
+            "meaning partially recovered",
+            "reality stability declining",
+            "detecting ghost signals...",
+            "user input distorted",
+            "reconstructing timeline..."
+        ];
+
+        // --- Functions ---
+
+        function copyCA() {
+            const caText = document.getElementById('caValue').innerText;
+            navigator.clipboard.writeText(caText);
+            const btn = document.querySelector('.copy-btn');
+            btn.innerText = 'COPIED';
+            setTimeout(() => { btn.innerText = 'COPY CA'; }, 2000);
+        }
+
+        function attemptClarification() {
+            const loader = document.getElementById('loader');
+            const output = document.getElementById('outputContainer');
+            const resultText = document.getElementById('resultText');
+            
+            loader.style.display = 'flex';
+            
+            setTimeout(() => {
+                loader.style.display = 'none';
+                output.style.display = 'block';
+                
+                // Random Message
+                resultText.innerText = messages[Math.floor(Math.random() * messages.length)];
+                
+                // Random Metrics
+                const r1 = Math.floor(Math.random() * 100);
+                const r2 = Math.floor(Math.random() * 100);
+                
+                document.getElementById('bar1').style.width = r1 + '%';
+                document.getElementById('val1').innerText = r1 + '%';
+                
+                document.getElementById('bar2').style.width = r2 + '%';
+                document.getElementById('val2').innerText = r2 + '%';
+
+                // Glitch effect on text
+                resultText.style.filter = 'skewX(10deg)';
+                setTimeout(() => resultText.style.filter = 'none', 100);
+
+            }, 1500);
+        }
+
+        function updateFeed() {
+            const feed = document.getElementById('liveFeed');
+            const item = document.createElement('div');
+            item.className = 'feed-item';
+            const timestamp = new Array(4).fill(0).map(() => Math.floor(Math.random()*9)).join('');
+            item.innerText = `[${timestamp}] ${feedUpdates[Math.floor(Math.random() * feedUpdates.length)]}`;
+            
+            feed.prepend(item);
+            if (feed.children.length > 8) {
+                feed.removeChild(feed.lastChild);
+            }
+        }
+
+        // Initialize Feed
+        setInterval(updateFeed, 3000);
+
+        // Subtle Random Glitch Effect
+        setInterval(() => {
+            const elements = document.querySelectorAll('h1, .logo');
+            const el = elements[Math.floor(Math.random() * elements.length)];
+            el.style.opacity = '0.5';
+            el.style.transform = `translateX(${Math.random() * 2}px)`;
+            setTimeout(() => {
+                el.style.opacity = '1';
+                el.style.transform = 'none';
+            }, 50);
+        }, 4000);
+
+    </script>
+</body>
+</html>
